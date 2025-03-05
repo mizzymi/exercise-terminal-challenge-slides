@@ -61,7 +61,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "84fd8f81e5c1c4483863"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "9b8327cb8e981988f1b0"; // eslint-disable-line no-unused-vars
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule; // eslint-disable-line no-unused-vars
@@ -44750,7 +44750,8 @@ var Stack = __webpack_require__("./node_modules/lodash/_Stack.js"),
     isMap = __webpack_require__("./node_modules/lodash/isMap.js"),
     isObject = __webpack_require__("./node_modules/lodash/isObject.js"),
     isSet = __webpack_require__("./node_modules/lodash/isSet.js"),
-    keys = __webpack_require__("./node_modules/lodash/keys.js");
+    keys = __webpack_require__("./node_modules/lodash/keys.js"),
+    keysIn = __webpack_require__("./node_modules/lodash/keysIn.js");
 
 /** Used to compose bitmasks for cloning. */
 var CLONE_DEEP_FLAG = 1,
@@ -44872,16 +44873,10 @@ function baseClone(value, bitmask, customizer, key, object, stack) {
     value.forEach(function(subValue) {
       result.add(baseClone(subValue, bitmask, customizer, subValue, value, stack));
     });
-
-    return result;
-  }
-
-  if (isMap(value)) {
+  } else if (isMap(value)) {
     value.forEach(function(subValue, key) {
       result.set(key, baseClone(subValue, bitmask, customizer, key, value, stack));
     });
-
-    return result;
   }
 
   var keysFunc = isFull
@@ -46083,8 +46078,8 @@ function baseMerge(object, source, srcIndex, customizer, stack) {
     return;
   }
   baseFor(source, function(srcValue, key) {
+    stack || (stack = new Stack);
     if (isObject(srcValue)) {
-      stack || (stack = new Stack);
       baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
     }
     else {
@@ -46184,7 +46179,7 @@ function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, sta
       if (isArguments(objValue)) {
         newValue = toPlainObject(objValue);
       }
-      else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
+      else if (!isObject(objValue) || isFunction(objValue)) {
         newValue = initCloneObject(srcValue);
       }
     }
@@ -46210,12 +46205,14 @@ module.exports = baseMergeDeep;
 /***/ (function(module, exports, __webpack_require__) {
 
 var arrayMap = __webpack_require__("./node_modules/lodash/_arrayMap.js"),
+    baseGet = __webpack_require__("./node_modules/lodash/_baseGet.js"),
     baseIteratee = __webpack_require__("./node_modules/lodash/_baseIteratee.js"),
     baseMap = __webpack_require__("./node_modules/lodash/_baseMap.js"),
     baseSortBy = __webpack_require__("./node_modules/lodash/_baseSortBy.js"),
     baseUnary = __webpack_require__("./node_modules/lodash/_baseUnary.js"),
     compareMultiple = __webpack_require__("./node_modules/lodash/_compareMultiple.js"),
-    identity = __webpack_require__("./node_modules/lodash/identity.js");
+    identity = __webpack_require__("./node_modules/lodash/identity.js"),
+    isArray = __webpack_require__("./node_modules/lodash/isArray.js");
 
 /**
  * The base implementation of `_.orderBy` without param guards.
@@ -46227,8 +46224,21 @@ var arrayMap = __webpack_require__("./node_modules/lodash/_arrayMap.js"),
  * @returns {Array} Returns the new sorted array.
  */
 function baseOrderBy(collection, iteratees, orders) {
+  if (iteratees.length) {
+    iteratees = arrayMap(iteratees, function(iteratee) {
+      if (isArray(iteratee)) {
+        return function(value) {
+          return baseGet(value, iteratee.length === 1 ? iteratee[0] : iteratee);
+        }
+      }
+      return iteratee;
+    });
+  } else {
+    iteratees = [identity];
+  }
+
   var index = -1;
-  iteratees = arrayMap(iteratees.length ? iteratees : [identity], baseUnary(baseIteratee));
+  iteratees = arrayMap(iteratees, baseUnary(baseIteratee));
 
   var result = baseMap(collection, function(value, key, collection) {
     var criteria = arrayMap(iteratees, function(iteratee) {
@@ -46477,6 +46487,10 @@ function baseSet(object, path, value, customizer) {
     var key = toKey(path[index]),
         newValue = value;
 
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      return object;
+    }
+
     if (index != lastIndex) {
       var objValue = nested[key];
       newValue = customizer ? customizer(objValue, key, nested) : undefined;
@@ -46714,6 +46728,32 @@ function baseToString(value) {
 }
 
 module.exports = baseToString;
+
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_baseTrim.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+var trimmedEndIndex = __webpack_require__("./node_modules/lodash/_trimmedEndIndex.js");
+
+/** Used to match leading whitespace. */
+var reTrimStart = /^\s+/;
+
+/**
+ * The base implementation of `_.trim`.
+ *
+ * @private
+ * @param {string} string The string to trim.
+ * @returns {string} Returns the trimmed string.
+ */
+function baseTrim(string) {
+  return string
+    ? string.slice(0, trimmedEndIndex(string) + 1).replace(reTrimStart, '')
+    : string;
+}
+
+module.exports = baseTrim;
 
 
 /***/ }),
@@ -48174,10 +48214,11 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
   if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
     return false;
   }
-  // Assume cyclic values are equal.
-  var stacked = stack.get(array);
-  if (stacked && stack.get(other)) {
-    return stacked == other;
+  // Check that cyclic values are equal.
+  var arrStacked = stack.get(array);
+  var othStacked = stack.get(other);
+  if (arrStacked && othStacked) {
+    return arrStacked == other && othStacked == array;
   }
   var index = -1,
       result = true,
@@ -48395,10 +48436,11 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
       return false;
     }
   }
-  // Assume cyclic values are equal.
-  var stacked = stack.get(object);
-  if (stacked && stack.get(other)) {
-    return stacked == other;
+  // Check that cyclic values are equal.
+  var objStacked = stack.get(object);
+  var othStacked = stack.get(other);
+  if (objStacked && othStacked) {
+    return objStacked == other && othStacked == object;
   }
   var result = true;
   stack.set(object, other);
@@ -50368,7 +50410,7 @@ module.exports = root;
 /***/ (function(module, exports) {
 
 /**
- * Gets the value at `key`, unless `key` is "__proto__".
+ * Gets the value at `key`, unless `key` is "__proto__" or "constructor".
  *
  * @private
  * @param {Object} object The object to query.
@@ -50376,9 +50418,15 @@ module.exports = root;
  * @returns {*} Returns the property value.
  */
 function safeGet(object, key) {
-  return key == '__proto__'
-    ? undefined
-    : object[key];
+  if (key === 'constructor' && typeof object[key] === 'function') {
+    return;
+  }
+
+  if (key == '__proto__') {
+    return;
+  }
+
+  return object[key];
 }
 
 module.exports = safeGet;
@@ -50854,6 +50902,32 @@ function toSource(func) {
 }
 
 module.exports = toSource;
+
+
+/***/ }),
+
+/***/ "./node_modules/lodash/_trimmedEndIndex.js":
+/***/ (function(module, exports) {
+
+/** Used to match a single whitespace character. */
+var reWhitespace = /\s/;
+
+/**
+ * Used by `_.trim` and `_.trimEnd` to get the index of the last non-whitespace
+ * character of `string`.
+ *
+ * @private
+ * @param {string} string The string to inspect.
+ * @returns {number} Returns the index of the last non-whitespace character.
+ */
+function trimmedEndIndex(string) {
+  var index = string.length;
+
+  while (index-- && reWhitespace.test(string.charAt(index))) {}
+  return index;
+}
+
+module.exports = trimmedEndIndex;
 
 
 /***/ }),
@@ -51344,6 +51418,10 @@ var arrayFilter = __webpack_require__("./node_modules/lodash/_arrayFilter.js"),
  * // The `_.property` iteratee shorthand.
  * _.filter(users, 'active');
  * // => objects for ['barney']
+ *
+ * // Combining several predicates using `_.overEvery` or `_.overSome`.
+ * _.filter(users, _.overSome([{ 'age': 36 }, ['age', 40]]));
+ * // => objects for ['fred', 'barney']
  */
 function filter(collection, predicate) {
   var func = isArray(collection) ? arrayFilter : baseFilter;
@@ -53251,15 +53329,15 @@ var baseFlatten = __webpack_require__("./node_modules/lodash/_baseFlatten.js"),
  * var users = [
  *   { 'user': 'fred',   'age': 48 },
  *   { 'user': 'barney', 'age': 36 },
- *   { 'user': 'fred',   'age': 40 },
+ *   { 'user': 'fred',   'age': 30 },
  *   { 'user': 'barney', 'age': 34 }
  * ];
  *
  * _.sortBy(users, [function(o) { return o.user; }]);
- * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
+ * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 30]]
  *
  * _.sortBy(users, ['user', 'age']);
- * // => objects for [['barney', 34], ['barney', 36], ['fred', 40], ['fred', 48]]
+ * // => objects for [['barney', 34], ['barney', 36], ['fred', 30], ['fred', 48]]
  */
 var sortBy = baseRest(function(collection, iteratees) {
   if (collection == null) {
@@ -53469,14 +53547,12 @@ module.exports = toInteger;
 /***/ "./node_modules/lodash/toNumber.js":
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__("./node_modules/lodash/isObject.js"),
+var baseTrim = __webpack_require__("./node_modules/lodash/_baseTrim.js"),
+    isObject = __webpack_require__("./node_modules/lodash/isObject.js"),
     isSymbol = __webpack_require__("./node_modules/lodash/isSymbol.js");
 
 /** Used as references for various `Number` constants. */
 var NAN = 0 / 0;
-
-/** Used to match leading and trailing whitespace. */
-var reTrim = /^\s+|\s+$/g;
 
 /** Used to detect bad signed hexadecimal string values. */
 var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
@@ -53527,7 +53603,7 @@ function toNumber(value) {
   if (typeof value != 'string') {
     return value === 0 ? value : +value;
   }
-  value = value.replace(reTrim, '');
+  value = baseTrim(value);
   var isBinary = reIsBinary.test(value);
   return (isBinary || reIsOctal.test(value))
     ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
