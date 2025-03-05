@@ -1,68 +1,43 @@
-<!--hide-->
-# Command Line Preview
-<!--endhide-->
+This project consists of **interactive slides** to learn about the command line.
 
-This command line challenge is designed to help you become familiar with the terminal. This challenge goes over the most used commands every developer needs to know in order to succeed in life.
+## 🚀 Installation, Building, and Deployment of the Slides
 
-> ❗ We recommend reading the lesson [The Command Line](https://4geeks.com/lesson/the-command-line-the-terminal) on the 4Geeks.com platform before doing this exercise.
+To work with this project, follow the steps below.
 
-💻 The challenge is designed for computers using Linux bash. Use GitHub Codespaces or Gitpod if you need a cloud terminal.
+### 1️. Install dependencies
 
-<onlyfor saas="false" withBanner="false">
-  
-## 🌱 How to start this project
-
-### 👩‍🎓 Students and Teachers must follow this step
-
-This project comes with the necessary files to start working immediately.
-
-We recommend opening this very same repository using a development environment like [Codespaces](https://4geeks.com/lesson/what-is-github-codespaces) (recommended) or [Gitpod](https://4geeks.com/lesson/how-to-use-gitpod). 
-
-This is the repository you need to open:
-
-```text
-https://github.com/breatheco-de/excercise-terminal-challenge.git
-```
-
-**👉 Please follow these steps on** [how to start a coding project](https://4geeks.com/lesson/how-to-start-a-project).
-
-Alternatively, you can clone it on your local computer.
-
->⚠️ Before cloning, be aware of this potential issue on Windows  
-
-On **Windows and some Linux configurations**, there is a limit on the number of characters allowed in file and folder names. If the repository has paths that are too long, you might encounter the error:  
-
-> **Filename too long**  
-
-To avoid this issue, instead of cloning the repository in the usual way, use the `--no-checkout` option, which will prevent Git from automatically extracting the long files. Then, manually checkout with these commands:  
-
-```
-git clone --no-checkout https://github.com/breatheco-de/exercise-terminal-challenge.git
-cd exercise-terminal-challenge
-git checkout HEAD -- 
-``` 
-
-> 💡 Important: Remember to save and upload your code to GitHub by creating a new repository, updating the remote (`git remote set-url origin <your new url>`), and uploading the code to your new repository using the `add`, `commit` and `push` commands from the git terminal.
-
-## Only teachers must follow this step:
-
-To present the activity to the students, access the following [presentation](https://breatheco-de.github.io/exercise-terminal-challenge/). If you experience any issues with the website, follow these steps after cloning or opening the project in Codespaces:
-
-#### 1) Install the packages.
+Before running any process, install the necessary dependencies:
 
 ```bash
-$ npm install
+npm install
 ```
+This will download all the required packages to view and modify the slides correctly.
 
-#### 2) Run the presentation.
+### 2️. Build the slides
+To generate the optimized version of the slides for production, run:
 
 ```bash
-$ npm run start
+npm run build
 ```
-</onlyfor>
 
-## Start Playing!
+This will create a `dist/` folder with the necessary files to view the slides in a browser.
 
-Follow the presentation for a better experience.
+If `dist/` is not generated correctly, check the terminal logs and ensure that `webpack.config.js` is configured correctly.
 
-This and many other projects are used to [learn to code](https://4geeksacademy.com/us/learn-to-code) by students of 4Geeks Academy [Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) created by [Alejandro Sanchez](https://twitter.com/alesanchezr) and many other contributors. Learn more about our [Programming Courses](https://4geeksacademy.com/us/programming-courses) to become a [Full Stack Developer](https://4geeksacademy.com/us/coding-bootcamps/full-stack-developer), or our [Data Science Bootcamp](https://4geeksacademy.com/us/coding-bootcamps/datascience-machine-learning).
+### 3. Run in development mode
+
+If you want to view the slides locally before deploying them, use:
+
+```bash
+npm run start
+```
+
+This will start a local server that will allow you to view the slides in the browser.
+
+### 4️. Deploy the slides on GitHub Pages
+
+To publish the slides on **GitHub Pages**, run:
+
+```bash
+npm run deploy
+```
