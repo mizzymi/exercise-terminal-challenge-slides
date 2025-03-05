@@ -3,6 +3,7 @@
 
 var path = require("path");
 var webpack = require("webpack");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   devtool: "cheap-module-source-map",
@@ -19,7 +20,11 @@ module.exports = {
   },
   plugins: [
     new webpack.NamedModulesPlugin(),
-    new webpack.HotModuleReplacementPlugin()
+    new webpack.HotModuleReplacementPlugin(),
+    new HtmlWebpackPlugin({
+      template: "./index.html", // Archivo HTML base en src
+      filename: "index.html",
+    })
   ],
   module: {
     loaders: [{
